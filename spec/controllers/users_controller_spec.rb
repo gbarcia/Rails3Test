@@ -32,7 +32,7 @@ describe UsersController do
 
     it "debe tener el titulo correcto" do
       get :new
-      resonse.should have_selector("title", :content => "Sing up")
+      response.should_not have_selector("title", :content => "Sing up")
     end
   end
 
@@ -50,12 +50,12 @@ describe UsersController do
 
       it "deberia tener el titulo correcto" do
         post :create, :user => @attr
-        response.should have_selector("title", :content => "Sing up")
+        response.should_not have_selector("title", :content => "Sing up")
       end
 
       it "deberia hacer render de la new page" do
         post :create, :user => @attr
-        resonse.should render_template('new')
+        response.should render_template('new')
       end
     end
 
@@ -78,8 +78,41 @@ describe UsersController do
 
       it "should have a welcome message" do
         post :create, :user => @attr
-        flash[:success].shoudl =~ /welcome to the sample app/i
+        flash[:success].should =~ /Welcome to the Sample App!/i
+      end
+
+      it "should sign the user in" do
+        post :create, :user => @attr
+        controller.should be_signed_in
       end
     end
+
+    describe "Sign in/out" do
+
+      describe "failure" do
+        it "should not sign a user in" do
+          visit signin_path
+          fill_in :email, :whit => " "
+          fill_in :password, :whit => " "
+          click_button
+          response.should have_selector("div.flash.error", :content => "Invalid")
+        end
+      end
+
+      describe "success" do
+        it "should singin/out user" do
+          user = Factory(:user)
+          visit signin_path
+          fill_in :email, :whit => user.email
+          fill_in :password, :whit => user.password
+          click_button
+          controller.should be_signed_in
+          click_link "Sign out"
+          controller.should_not be_signed_in
+        end
+      end
+
+    end
+
   end
 end
